@@ -1,0 +1,24 @@
+////
+/// Global application styles
+////
+
+///
+/// Fonts
+///
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
+
+///
+/// Configuration
+///
+@import 'settings';
+
+///
+/// Third party utilities
+///
+@import './node_modules/flywheel-adapt/adapt';
+@import './node_modules/spinkit/scss/spinners/7-three-bounce';
+
+///
+/// Components
+///
+@import 'typography';

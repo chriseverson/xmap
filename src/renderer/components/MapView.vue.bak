@@ -1,0 +1,195 @@
+<template>
+	<div id="map"></div>
+</template>
+
+<script>
+	import GoogleMaps from 'google-maps';
+	import ExtPlaneJs from 'extplanejs';
+	import fs from 'fs';
+
+	export default {
+		name: 'map-view',
+
+		data: function() {
+			return {
+				theme: 'static/map-styles-dark.json',
+				themeLoaded: false,
+				gmapsKey: 'AIzaSyCBnjERUr21_XDnH6P2cR4Iplk4nsR2KDU',
+				mapOptions: {
+					center: {
+						lat: -34.397,
+						lng: 150.644
+					},
+					// scrollwheel: false,
+					zoom: 8,
+					streetViewControl: false,
+					mapTypeControl: false,
+					styles: null
+				},
+				xplane: null,
+				map: null,
+				marker: null,
+				plane: null,
+				latitude: 0,
+				longitude: 0,
+			}
+		},
+
+		computed: {
+			latLng: function() {
+				var position = {
+					lat: parseFloat(this.latitude),
+					lng:parseFloat(this.longitude)
+				};
+
+				this.map.panTo( position );
+
+				return position;
+			}
+		},
+
+		watch: {
+			themeLoaded: function( value ) { this.loadMap( value ) },
+			latitude: function( value ) {
+				console.log( value );
+				if( this.marker )
+					this.marker.setPosition(this.latLng);
+				// this.marker.position.lat = value
+			},
+			longitude: function( value) {
+				if( this.marker )
+					this.marker.setPosition(this.latLng);
+				// this.marker.position.lng = value
+
+			}
+		},
+
+		created() {
+			console.log( 'CREATED' );
+			this.loadTheme();
+
+			var self = this;
+
+
+
+
+		},
+
+		methods: {
+
+			loadTheme() {
+				var self = this;
+				console.log( 'LOAD THEME ---' );
+				fs.readFile( this.theme, 'utf8', function( err, data ) {
+					if( ! err ) {
+						console.log( 'map styles loaded' );
+						self.mapOptions.styles = JSON.parse( data );
+						self.themeLoaded = true;
+					} else {
+						console.error( 'Error loading map styles' );
+					}
+				});
+			},
+
+			loadMap( value ) {
+				if( ! value ) {
+					console.error( 'Something went wrong loading the styles' );
+				}
+
+				var self = this;
+
+				GoogleMaps.KEY = this.gmapsKey;
+
+				GoogleMaps.load( function(google) {
+					self.map = new google.maps.Map(document.getElementById('map'), self.mapOptions);
+					// console.log( 'PRE store', self.$store.state );
+					self.$store.commit('templateLoaded');
+					// console.log( 'POST store', self.$store );
+
+
+					self.xplane = new ExtPlaneJs({
+			    host: '127.0.0.1',
+			    port: 51000,
+			    broadcast: false
+			});
+
+			self.xplane.on('loaded', function() {
+				console.log( 'xplane loaded' );
+
+				self.xplane.client.interval(0.33);
+
+				self.xplane.client.subscribe('sim/flightmodel/position/latitude');
+				self.xplane.client.subscribe('sim/flightmodel/position/longitude');
+				self.xplane.client.subscribe('sim/flightmodel/position/hpath');
+
+				self.xplane.on( 'sim/flightmodel/position/latitude', function(dref, value) {
+					// console.log( dref, value );
+					self.latitude = value;
+				});
+
+				self.xplane.on( 'sim/flightmodel/position/longitude', function(dref, value) {
+					// console.log( dref, value );
+					self.longitude = value;
+
+				});
+
+				self.xplane.on( 'sim/flightmodel/position/hpath', function(dref, value) {
+					console.log( dref, value );
+					// self.latitude = value;
+					//
+					if( self.map ) {
+						self.plane.rotation = parseFloat(value);
+						self.marker.setIcon( self.plane );
+					}
+				});
+
+					console.log( self.latitude );
+
+					self.plane = {
+						fillColor: '#cf0',
+						fillOpacity: 1,
+						rotation: 270,
+						scale: 2.0,
+						// path:
+						path: 'M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z'
+					};
+
+					self.marker = new google.maps.Marker({
+						position: {lat: 0, lng: 0},
+						map: self.map,
+						icon: self.plane,
+
+
+					})
+
+			})
+
+
+					// console.log( self.latitude );
+
+
+				});
+
+					// self.$emit('loading:update', false);
+
+
+
+
+				// console.log( 'load map', value );
+
+				// console.log( $vm0 );
+			}
+
+		}
+	}
+</script>
+
+<style lang="scss">
+	#map {
+		z-index: 1;
+		position: absolute;
+		top: 0;
+		left: 0;
+		@include size( 100% );
+	}
+</style>

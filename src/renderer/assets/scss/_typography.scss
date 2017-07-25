@@ -1,0 +1,19 @@
+////
+/// Typography
+////
+
+///
+/// Global
+///
+body {
+	font: 300 16px/1.4 $font-family-primary;
+	color: $color-grey;
+}
+
+///
+/// Links
+///
+a {
+	text-decoration: none;
+	color: $color-blue-darken;
+}
