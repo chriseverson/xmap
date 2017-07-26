@@ -4,6 +4,8 @@
  * @since 0.0.1
  */
 
+import Vue from 'vue';
+
 /**
  * Current state
  *
@@ -23,8 +25,14 @@ const state = {
 	/** @type {Number} last reported elevation above MSL */
 	elevation: 0,
 
-	/** @type {Array} waypoints within a 100km radius */
-	waypoints: [],
+	/** @type {Object} navaids within a 100km radius */
+	// navaids: {
+		airport:  {},
+		ndb:      {},
+		vor:      {},
+		waypoint: {},
+		dme:      {},
+	// },
 
 }
 
@@ -75,6 +83,27 @@ const mutations = {
 		state.elevation = elevation;
 	},
 
+	navaid (state, navaid) {
+
+		var type = navaid.type;
+
+		// check if navaid already exists
+		if( state[navaid.type][navaid.id] ) {
+
+			// check if navaid is different than already saved version
+			if( state[navaid.type][navaid.id].heading !== navaid.heading ) {
+				Vue.set( state[navaid.type], navaid.id, navaid );
+			}
+
+		// create new navaid
+		} else {
+			Vue.set( state[navaid.type], navaid.id, navaid );
+		}
+	},
+
+	// waypoints (state, waypoints) {
+	// 	state.waypoints = waypoints;
+	// }
 }
 
 /**
@@ -123,6 +152,15 @@ const getters = {
 	getElevation: state => {
 		return state.elevation;
 	},
+
+	getAirports: state => {
+		console.log( state.airport );
+		return state.airport;
+	},
+
+	getWaypoints: state => {
+		return state.waypoint;
+	}
 
 
 
